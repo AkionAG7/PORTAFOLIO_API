@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, Boolean
 
 from app.db.base import Base
 
@@ -8,3 +8,4 @@ class UserStack(Base):
     Base.metadata,
     user_id = Column("user_id", ForeignKey("User.id"), primary_key= True)
     stack_id = Column("stack_id", ForeignKey("Stack.id"), primary_key= True)
+    status= Column(Boolean, default=True)
