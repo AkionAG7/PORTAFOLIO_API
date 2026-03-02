@@ -7,7 +7,7 @@ import uuid
 from uuid import UUID
 from app.core.config import ALGORITHM,SECRET_KEY,TOKEN_EXPIRE
 from app.models import User
-from app.schemas.User import UserRegisterDTO, UserLoginDTO, UserFilterDTO, UserUpdateDTO
+from app.schemas.User import UserRegisterDTO, UserLoginDTO, UserFilterDTO, UserUpdateDTO, UserResponseDTO
 from app.enums.Rol import RolEnum
 
 
@@ -60,7 +60,7 @@ def login_user(data: UserLoginDTO, db : Session) -> str:
     return create_access_token({"sub": str(user.id), "email" : user.email, "rol" : user.rol})
 
 #FUNCION PARA LISTAR A TODOS LOS USARIOS CON FILTROS OPCIONALES   
-def get_all_users(db : Session, filters: UserFilterDTO ) -> dict:
+def sv_get_all_users(filters: UserFilterDTO, db : Session ) -> dict:
     query = db.query(User)
     if filters.name:
         query = query.filter(User.name.ilike(f"%{filters.name}%"))
@@ -75,7 +75,7 @@ def get_all_users(db : Session, filters: UserFilterDTO ) -> dict:
     users = query.offset(filters.skip).limit(filters.limit).all()
 
     return{
-        "data": users,
+        "data": [UserResponseDTO.model_validate(u) for u in users],
         "metadata":{
             "total": total,
             "skip" : filters.skip,
@@ -84,7 +84,7 @@ def get_all_users(db : Session, filters: UserFilterDTO ) -> dict:
     }
 
 #FUNCION PARA MODIFICAR LA INFORMACION BASICA DEL USUARIO
-def update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Session) -> User:
+def sv_update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Session) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -100,11 +100,11 @@ def update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Session) 
     return user
 
 #FUNCION PARA MODIFICAR EL CORREO
-def update_email(user_id: UUID, data: UserLoginDTO, db: Session) -> User:
+def sv_update_email(user_id: UUID, data: UserLoginDTO, db: Session) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    if not verify_password(data.password, User.password):
+    if not verify_password(data.password, user.password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect credentials")
     user.email = data.email
     user.update_at = datetime.now()
@@ -113,7 +113,7 @@ def update_email(user_id: UUID, data: UserLoginDTO, db: Session) -> User:
     return user
 
 #FUNCION PARA ACTUALIZAR EL ROL DE UN USARIO
-def update_rol(user_id: UUID, rol: RolEnum, db : Session) -> User:
+def sv_update_rol(user_id: UUID, rol: RolEnum, db : Session) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -124,7 +124,7 @@ def update_rol(user_id: UUID, rol: RolEnum, db : Session) -> User:
     return user
 
 #FUNCION PARA ACTUALIZAR EL ESTADO DE UN USUAIO
-def update_status(user_id : UUID, db: Session) -> User:
+def sv_update_status(user_id : UUID, db: Session) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
