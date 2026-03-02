@@ -21,18 +21,18 @@ def update_basic_information(
     return update_basic_information(user_id, data, db)
 
 #ENDPOINT PARA ACTUALIZAR EL EMAIL
-@router.patch("/email/{user_id}", response_model= UserLoginDTO)
+@router.patch("/{user_id}/email", response_model= UserLoginDTO)
 def update_email(
     user_id: UUID, data: UserLoginDTO, db: Session = Depends(get_db)
 ):
     return update_email(user_id, data, db)
 
 #ENDPOINT PARA ACTUALIZAR EL ROL DEL USUARIO
-@router.patch("/rol{user_id}", response_model=UserResponseDTO)
-def update_rol(user_id: UUID, rol : RolEnum, db: Session):
+@router.patch("/{user_id}/rol", response_model=UserResponseDTO)
+def update_rol(user_id: UUID, rol : RolEnum, db: Session = Depends(get_db)):
     return update_rol(user_id, rol, db)
 
 #ENDPOINT PARA ACTUALIZAR EL ESTADO DEL USUARIO
-@router.patch("/status/{user_id}", response_model= UserResponseDTO)
-def update_status(user_id : UUID, db: Session):
+@router.patch("/{user_id}/status", response_model= UserResponseDTO)
+def update_status(user_id : UUID, db: Session = Depends(get_db)):
     return update_status(user_id, db)

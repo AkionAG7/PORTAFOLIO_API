@@ -1,11 +1,12 @@
-from sqlalchemy import Column, ForeignKey, Boolean
+from sqlalchemy import Column, ForeignKey, Boolean, Table
 
 from app.db.base import Base
 
 #CLASE DE LA BASE DE DATOS
-class UserStack(Base):
-    __tablename__ = "User_stack"
+UserStack = Table (
+    "User_stack",
     Base.metadata,
-    user_id = Column("user_id", ForeignKey("User.id"), primary_key= True)
-    stack_id = Column("stack_id", ForeignKey("Stack.id"), primary_key= True)
-    status= Column(Boolean, default=True)
+    Column("user_id", ForeignKey("User.id"), primary_key=True),
+    Column("stack_id", ForeignKey("Stack.id"), primary_key=True),
+    Column("status", Boolean, default=True),
+)

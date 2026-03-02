@@ -18,20 +18,20 @@ class User(Base):
     phone_number = Column(String, nullable=True)
     password = Column(String)
     rol = Column(String, default= RolEnum.user)
-    title = Column(String)
+    title = Column(String, nullable= True)
     status= Column(Boolean, default=True)
     create_at = Column(DateTime, nullable=True)
     update_at = Column(DateTime, nullable=True)
     #relaciones
-    projects = Relationship("Project", back_populates="User")
-    contacts = Relationship("Contact", back_populates="User")
+    projects = Relationship("Project", back_populates="user")
+    contacts = Relationship("Contact", back_populates="user")
     languages = Relationship(
         "Language",
         secondary= UserLanguage,
-        back_populates="User"
+        back_populates="users"
     )
     stacks = Relationship(
         "Stack",
         secondary= UserStack,
-        back_populates="User"
+        back_populates="users"
     )

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Annotated
 from datetime import datetime
 from uuid import UUID
@@ -11,10 +11,16 @@ class UserRegisterDTO(BaseModel):
     last_name1: str
     last_name2: str | None = None
     email: EmailStr
-    phone_number = str | None = None
-    password = str
-    title: str
-    create_at : datetime | None = datetime.now()
+    phone_number : str | None = None
+    password : str
+    title: str | None = None
+
+    @field_validator("password")
+    @classmethod
+    def password_max_length(cls, v):
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password cannot be more 72 characters")
+        return v
 
 #DTO de la respuesta de la API del cliente
 
@@ -24,7 +30,7 @@ class UserResponseDTO(BaseModel):
     last_name1: str
     last_name2: str | None = None
     email: str
-    title: str
+    title: str | None = None
     rol: str
 
     model_config = {"from_attributes": True}
@@ -51,5 +57,5 @@ class UserUpdateDTO(BaseModel):
     name: str | None = None
     last_name1: str | None = None
     last_name2: str | None = None
-    phone_number = str | None = None
+    phone_number : str | None = None
     title: str | None = None

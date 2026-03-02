@@ -1,4 +1,4 @@
-from sqlalchemy import Column,String, DateTime, Boolean
+from sqlalchemy import Column,String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import Relationship
 from app.db.base import Base
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +9,7 @@ class Contact(Base):
     __tablename__ = "Contact"
 
     id = Column(UUID(as_uuid=True), primary_key= True, default= uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("User.id",), nullable=False)
     name = Column(String)
     link = Column(String)
     image = Column(String, nullable=True)
@@ -16,4 +17,4 @@ class Contact(Base):
     create_at = Column(DateTime, nullable=True)
     update_at = Column(DateTime, nullable=True)
     #Relaciones
-    user = Relationship("User", back_populates="Contact")
+    user = Relationship("User", back_populates="contacts")

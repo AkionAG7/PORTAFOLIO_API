@@ -25,7 +25,7 @@ def verify_password(pwd: str, pwd_hashed : str ) -> bool:
 #FUNCION PARA CREAR EL TOKEN
 def create_access_token (data : dict) -> str:
     to_encode = data.copy()
-    expire = datetime.now() + timedelta(hours=TOKEN_EXPIRE)
+    expire = datetime.now() + timedelta(hours=int(TOKEN_EXPIRE))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode,SECRET_KEY, algorithm=ALGORITHM)
 
@@ -57,7 +57,7 @@ def login_user(data: UserLoginDTO, db : Session) -> str:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email or password is incorrect"
         )
-    return create_access_token({"sub": user.id, "email" : user.email, "rol" : user.rol})
+    return create_access_token({"sub": str(user.id), "email" : user.email, "rol" : user.rol})
 
 #FUNCION PARA LISTAR A TODOS LOS USARIOS CON FILTROS OPCIONALES   
 def get_all_users(db : Session, filters: UserFilterDTO ) -> dict:

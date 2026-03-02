@@ -19,5 +19,5 @@ class Stack(Base):
     users = Relationship(
         "User",
         secondary= UserStack,
-        back_populates="Stack"
+        back_populates="stacks"
     )
