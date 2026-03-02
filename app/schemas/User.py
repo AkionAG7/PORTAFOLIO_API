@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Annotated
 from datetime import datetime
 from uuid import UUID
+from app.schemas.common import Pagination
 
 
 #DTO PARA CREAR UN USUARIO
@@ -28,11 +29,27 @@ class UserResponseDTO(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
+#DTO DEL LOGIN
 class UserLoginDTO(BaseModel):
     email : EmailStr
     password : str
 
+#DTO DE LA RESPUESTA DEL TOKEN
 class TokenResponseDTO(BaseModel):
     access_token : str
     token_type: str = "bearer"
+
+#DTO DE LOS FILTROS ESPERADOS EN UN GET
+class UserFilterDTO(Pagination):
+    name : str | None = None
+    email : str | None = None
+    rol : str | None = None
+    status : bool | None = None
+
+#DTO PARA ACTUALIZAR INFORMACION BASICA DEL USUARIO
+class UserUpdateDTO(BaseModel):
+    name: str | None = None
+    last_name1: str | None = None
+    last_name2: str | None = None
+    phone_number = str | None = None
+    title: str | None = None
