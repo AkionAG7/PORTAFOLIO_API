@@ -133,3 +133,10 @@ def sv_update_status(user_id : UUID, db: Session) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+#FUNCION PARA TRAER LA INFORMACION DE UN USUARIO POR ID
+def sv_get_user_by_Id(user_id: UUID, db: Session) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return UserResponseDTO.model_validate(user)

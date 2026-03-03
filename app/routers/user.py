@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.depends_db import get_db
 from app.schemas.User import UserFilterDTO, UserResponseDTO, UserUpdateDTO, UserLoginDTO
-from app.services.user_service import sv_get_all_users, sv_update_basic_information, sv_update_email, sv_update_rol, sv_update_status
+from app.services.user_service import sv_get_all_users, sv_update_basic_information, sv_update_email, sv_update_rol, sv_update_status, sv_get_user_by_Id
 from uuid import UUID
 from app.enums.Rol import RolEnum
 
@@ -36,3 +36,8 @@ def update_rol(user_id: UUID, rol : RolEnum, db: Session = Depends(get_db)):
 @router.patch("/{user_id}/status", response_model= UserResponseDTO)
 def update_status(user_id : UUID, db: Session = Depends(get_db)):
     return sv_update_status(user_id, db)
+
+#ENDPOINT PARA TRAER UN USUARIO POR SU ID
+@router.get("/{user_id}")
+def get_user_by_Id( user_id : UUID, db: Session = Depends(get_db)):
+    return sv_get_user_by_Id(user_id, db)
