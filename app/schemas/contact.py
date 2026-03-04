@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from datetime import datetime
 from uuid import UUID
 from app.schemas.common import Pagination
 
@@ -19,7 +18,15 @@ class ContactResponseDTO(BaseModel):
 
     model_config = {'from_attributes' : True}
 
-#DTO DE LOS FILTROS ESPERADOS EN UN GET
+#DTO DE LOS FILTROS ESPERADOS PARA EL GET DE CONTACTOS
 class ContactFilterDTO(Pagination):
     name: str | None = None
     status: bool | None = None
+
+#DTO PARA MODIFICAR LA INFORMACION DE UN CONTACTO
+
+class ContactUpdateDTO(BaseModel):
+    name = str | None = None
+    link = str | None = None
+    image = str | None = None
+    status= bool | None = None
