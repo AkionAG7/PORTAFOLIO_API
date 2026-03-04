@@ -55,4 +55,7 @@ class UserFilterDTO(Pagination):
 #DTO PARA ACTUALIZAR INFORMACION BASICA DEL USUARIO
 class UserUpdateDTO(BaseModel):
     name: str | None = None
-    status: bool | None = None
+    last_name1: str | None = None
+    last_name2: str | None = None
+    phone_number : str | None = None
+    title: str | None = None

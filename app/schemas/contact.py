@@ -8,6 +8,7 @@ class ContactCreateDTO(BaseModel):
     link : str
     image : str | None = None
 
+
 class ContactResponseDTO(BaseModel):
     id: UUID
     user_id : UUID
@@ -17,3 +18,8 @@ class ContactResponseDTO(BaseModel):
     status: bool
 
     model_config = {'from_attributes' : True}
+
+#DTO DE LOS FILTROS ESPERADOS EN UN GET
+class ContactFilterDTO(Pagination):
+    name: str | None = None
+    status: bool | None = None
