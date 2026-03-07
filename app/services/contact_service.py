@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 import uuid
 from app.schemas.contact import ContactCreateDTO, ContactResponseDTO, ContactFilterDTO, ContactUpdateDTO
-from app.services.storage_service import sv_upload_file
+from app.services.storage_service import sv_upload_file, sv_delete_file
 from app.enums.storage_folder import StorageFolderEnum
 from app.models.Contact import Contact
 
@@ -54,7 +54,7 @@ def sv_get_user_contact_filter(user_id : UUID, filter: ContactFilterDTO, db: Ses
     }
 
 # FUNCION PARA TRAER UN CONTACTO EN ESPECIFICO
-def sv_get_contact_by_id(contact_id : UUID, filter: ContactFilterDTO, db: Session) -> Contact:
+def sv_get_contact_by_id(contact_id : UUID, db: Session) -> Contact:
     contact = db.query(Contact).filter(Contact.id == contact_id)
     if not contact:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
@@ -76,3 +76,22 @@ def sv_update_contact(contact_id: UUID, data : ContactUpdateDTO, db : Session) -
     db.refresh(contact)
     return contact
 
+#Funcion para modificar una imagen de un contacto:
+def sv_update_image_contact(contact_id : UUID, user_id : UUID, file: UploadFile, db: Session) -> Contact:
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    image_url = None
+
+    if not contact:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
+    
+    if not file:
+        raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="A new image is requiered")
+    
+    image_url = sv_upload_file(file, StorageFolderEnum.contact, user_id)
+    sv_delete_file(contact.link)
+
+    contact.link = image_url
+    db.commit()
+    db.refresh(contact)
+    return contact
+    
