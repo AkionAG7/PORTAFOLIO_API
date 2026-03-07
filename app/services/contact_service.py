@@ -72,6 +72,7 @@ def sv_update_contact(contact_id: UUID, data : ContactUpdateDTO, db : Session) -
         setattr(contact, field, value)
     
     contact.update_at = datetime.now()
+    
     db.commit()
     db.refresh(contact)
     return contact
@@ -91,7 +92,23 @@ def sv_update_image_contact(contact_id : UUID, user_id : UUID, file: UploadFile,
     sv_delete_file(contact.link)
 
     contact.link = image_url
+    contact.update_at = datetime.now()
+
     db.commit()
     db.refresh(contact)
     return contact
     
+
+#Funcion para modificar el estado de un contacto
+def sv_update_status(contact_id : UUID, db : Session) -> Contact:
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+
+    if not contact:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= "Contact not found")
+    
+    contact.status = not contact.id
+    contact.update_at = datetime.now()
+
+    db.commit()
+    db.refresh(contact)
+    return contact
