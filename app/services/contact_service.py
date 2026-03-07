@@ -34,7 +34,7 @@ def sv_create_contact(
     return ContactResponseDTO.model_validate(contact)
 
 # FUNCION PARA TRAER TODOS LOS CONTACTOS DE UN USUARIO CON FILTRADO
-def sv_get_contact_by_filter(user_id : UUID, filter: ContactFilterDTO, db: Session) -> dict:
+def sv_get_user_contact_filter(user_id : UUID, filter: ContactFilterDTO, db: Session) -> dict:
     query = db.query(Contact).filter(Contact.user_id == user_id)
     if filter.name:
         query = query.filter(Contact.name == filter.name)
@@ -53,6 +53,13 @@ def sv_get_contact_by_filter(user_id : UUID, filter: ContactFilterDTO, db: Sessi
         }
     }
 
+# FUNCION PARA TRAER UN CONTACTO EN ESPECIFICO
+def sv_get_contact_by_id(contact_id : UUID, filter: ContactFilterDTO, db: Session) -> Contact:
+    contact = db.query(Contact).filter(Contact.id == contact_id)
+    if not contact:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
+    return contact
+
 #FUNCION PARA MODIFICAR UN CONTACTO
 def sv_update_contact(contact_id: UUID, data : ContactUpdateDTO, db : Session) -> Contact:
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
@@ -68,3 +75,4 @@ def sv_update_contact(contact_id: UUID, data : ContactUpdateDTO, db : Session) -
     db.commit()
     db.refresh(contact)
     return contact
+

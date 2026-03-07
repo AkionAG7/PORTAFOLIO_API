@@ -38,6 +38,6 @@ def update_status(user_id : UUID, db: Session = Depends(get_db)):
     return sv_update_status(user_id, db)
 
 #ENDPOINT PARA TRAER UN USUARIO POR SU ID
-@router.get("/{user_id}")
+@router.get("/{user_id}", response_model= UserResponseDTO)
 def get_user_by_Id( user_id : UUID, db: Session = Depends(get_db)):
     return sv_get_user_by_Id(user_id, db)
