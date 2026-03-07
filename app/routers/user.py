@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile
 from sqlalchemy.orm import Session
 from app.core.depends_db import get_db
 from app.schemas.User import UserFilterDTO, UserResponseDTO, UserUpdateDTO, UserLoginDTO
-from app.services.user_service import sv_get_all_users, sv_update_basic_information, sv_update_email, sv_update_rol, sv_update_status, sv_get_user_by_Id
+from app.services.user_service import sv_get_all_users, sv_update_basic_information, sv_update_email, sv_update_rol, sv_update_status, sv_get_user_by_Id, sv_update_user_image
 from uuid import UUID
 from app.enums.Rol import RolEnum
 
@@ -41,3 +41,8 @@ def update_status(user_id : UUID, db: Session = Depends(get_db)):
 @router.get("/{user_id}", response_model= UserResponseDTO)
 def get_user_by_Id( user_id : UUID, db: Session = Depends(get_db)):
     return sv_get_user_by_Id(user_id, db)
+
+#ENDPOINT PARA ACTUALIZAR LA IMAGEN DE UN USUARIO
+@router.patch("/{user_id}/image", response_model=UserResponseDTO)
+def update_user_image(user_id: UUID, file: UploadFile, db: Session = Depends(get_db)):
+    return sv_update_user_image(user_id, file, db)

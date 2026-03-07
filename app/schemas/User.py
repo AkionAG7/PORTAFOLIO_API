@@ -59,3 +59,4 @@ class UserUpdateDTO(BaseModel):
     last_name2: str | None = None
     phone_number : str | None = None
     title: str | None = None
+    description: str | None = None

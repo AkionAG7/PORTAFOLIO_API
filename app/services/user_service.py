@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from passlib.context import CryptContext
 import jwt
 from datetime import datetime, timedelta
@@ -9,7 +9,8 @@ from app.core.config import ALGORITHM,SECRET_KEY,TOKEN_EXPIRE
 from app.models import User
 from app.schemas.User import UserRegisterDTO, UserLoginDTO, UserFilterDTO, UserUpdateDTO, UserResponseDTO
 from app.enums.Rol import RolEnum
-
+from app.services.storage_service import sv_delete_file, sv_upload_file
+from app.enums.storage_folder import StorageFolderEnum
 
 # CREACION DEL CONNTEXT PARA EL HASH DEL PASSWORD
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated ="auto")
@@ -140,3 +141,23 @@ def sv_get_user_by_Id(user_id: UUID, db: Session) -> User:
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return UserResponseDTO.model_validate(user)
+
+#FUNCION PARA CAMBIAR LA IMAGEN DE UN USARIO
+def sv_update_user_image(user_id : UUID, file: UploadFile, db: Session) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+    image_url = None
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= "User not found")
+    if not file:
+        raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail= "An image is required")
+    
+    if user.user_image:
+        sv_delete_file(user.user_image)
+    
+    image_url = sv_upload_file(file,StorageFolderEnum.user, user_id)
+    user.user_image = image_url
+
+    db.commit()
+    db.refresh(user)
+    return user

@@ -18,6 +18,8 @@ class User(Base):
     phone_number = Column(String, nullable=True)
     password = Column(String)
     rol = Column(String, default= RolEnum.user)
+    description = Column(String, nullable= True)
+    user_image = Column(String, nullable= True)
     title = Column(String, nullable= True)
     status= Column(Boolean, default=True)
     create_at = Column(DateTime, nullable=True)

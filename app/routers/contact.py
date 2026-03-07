@@ -17,7 +17,7 @@ def create_contact(user_id : UUID, name: str = Form(...),
     return sv_create_contact(user_id,data, db, file)
 
 
-@router.get("/user/{user_id}")
+@router.get("/{user_id}/user")
 def get_contact_by_filter(user_id : UUID, filter: ContactFilterDTO, db : Session = Depends(get_db) ):
     return sv_get_user_contact_filter(user_id, filter, db)
 
@@ -32,6 +32,6 @@ def get_contact_by_filter(contact_id : UUID, data: ContactUpdateDTO, db : Sessio
     return sv_update_contact(contact_id, data, db)
 
 
-@router.patch("/image/{contact_id}/{user_id}", response_model=ContactResponseDTO)
+@router.patch("/{contact_id}/{user_id}/image", response_model=ContactResponseDTO)
 def update_image_contact(contact_id : UUID, user_id : UUID, file: UploadFile, db: Session = Depends(get_db)):
     return sv_update_image_contact(contact_id, user_id, file, db )
