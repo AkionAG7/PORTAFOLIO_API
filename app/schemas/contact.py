@@ -26,7 +26,7 @@ class ContactFilterDTO(Pagination):
 #DTO PARA MODIFICAR LA INFORMACION DE UN CONTACTO
 
 class ContactUpdateDTO(BaseModel):
-    name = str | None = None
-    link = str | None = None
-    image = str | None = None
-    status= bool | None = None
+    name: str | None = None
+    link: str | None = None
+    image: str | None = None
+    status: bool | None = None
