@@ -11,6 +11,7 @@ from app.schemas.User import UserRegisterDTO, UserLoginDTO, UserFilterDTO, UserU
 from app.enums.Rol import RolEnum
 from app.services.storage_service import sv_delete_file, sv_upload_file
 from app.enums.storage_folder import StorageFolderEnum
+from app.core.auth import check_own_resource
 
 # CREACION DEL CONNTEXT PARA EL HASH DEL PASSWORD
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated ="auto")
@@ -85,7 +86,9 @@ def sv_get_all_users(filters: UserFilterDTO, db : Session ) -> dict:
     }
 
 #FUNCION PARA MODIFICAR LA INFORMACION BASICA DEL USUARIO
-def sv_update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Session) -> User:
+def sv_update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Session, current_user: dict = None) -> User:
+    if current_user:
+        check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -101,7 +104,9 @@ def sv_update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Sessio
     return user
 
 #FUNCION PARA MODIFICAR EL CORREO
-def sv_update_email(user_id: UUID, data: UserLoginDTO, db: Session) -> User:
+def sv_update_email(user_id: UUID, data: UserLoginDTO, db: Session, current_user: dict = None) -> User:
+    if current_user:
+        check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -143,7 +148,9 @@ def sv_get_user_by_Id(user_id: UUID, db: Session) -> User:
     return UserResponseDTO.model_validate(user)
 
 #FUNCION PARA CAMBIAR LA IMAGEN DE UN USARIO
-def sv_update_user_image(user_id : UUID, file: UploadFile, db: Session) -> User:
+def sv_update_user_image(user_id : UUID, file: UploadFile, db: Session, current_user: dict = None) -> User:
+    if current_user:
+        check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
     image_url = None
 

@@ -12,6 +12,7 @@ from app.schemas.language import (
 from app.models.Language import Language
 from app.models.User_language import UserLanguage
 from app.models.User import User
+from app.core.auth import check_own_resource
 
 
 # ──────────────────────────────────────────────────────────────
@@ -105,7 +106,9 @@ _USER_LANGUAGE_COLS = (
 )
 
 
-def sv_create_language_user(data: CreateLanguageUserDTO, db: Session) -> UserLanguageReponseDTO:
+def sv_create_language_user(data: CreateLanguageUserDTO, db: Session, current_user: dict = None) -> UserLanguageReponseDTO:
+    if current_user:
+        check_own_resource(data.user_id, current_user)
     user = db.query(User).filter(User.id == data.user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -200,7 +203,9 @@ def sv_get_user_language(user_id: UUID, language_id: UUID, db: Session) -> UserL
     )
 
 
-def sv_update_status_user_language(user_id: UUID, language_id: UUID, db: Session) -> UserLanguageReponseDTO:
+def sv_update_status_user_language(user_id: UUID, language_id: UUID, db: Session, current_user: dict = None) -> UserLanguageReponseDTO:
+    if current_user:
+        check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -231,7 +236,9 @@ def sv_update_status_user_language(user_id: UUID, language_id: UUID, db: Session
     )
 
 
-def sv_update_data_user_language(user_id: UUID, language_id: UUID, data: UpdateLanguageUserDTO, db: Session) -> UserLanguageReponseDTO:
+def sv_update_data_user_language(user_id: UUID, language_id: UUID, data: UpdateLanguageUserDTO, db: Session, current_user: dict = None) -> UserLanguageReponseDTO:
+    if current_user:
+        check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
