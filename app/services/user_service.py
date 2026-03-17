@@ -8,6 +8,7 @@ from uuid import UUID
 from app.core.config import ALGORITHM,SECRET_KEY,TOKEN_EXPIRE
 from app.models import User
 from app.schemas.User import UserRegisterDTO, UserLoginDTO, UserFilterDTO, UserUpdateDTO, UserResponseDTO
+from app.schemas.common import MessageResponseDTO
 from app.enums.Rol import RolEnum
 from app.services.storage_service import sv_delete_file, sv_upload_file
 from app.enums.storage_folder import StorageFolderEnum
@@ -32,7 +33,7 @@ def create_access_token (data : dict) -> str:
     return jwt.encode(to_encode,SECRET_KEY, algorithm=ALGORITHM)
 
 #FUNCION PARA REGISTRAR UN USUARIO (CREARLO)
-def register_user(data: UserRegisterDTO, db : Session) -> User:
+def register_user(data: UserRegisterDTO, db : Session) -> MessageResponseDTO:
     existing = db.query(User).filter(User.email == data.email).first()
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This email already used")
@@ -48,8 +49,7 @@ def register_user(data: UserRegisterDTO, db : Session) -> User:
     )
     db.add(user)
     db.commit()
-    db.refresh(user)
-    return user
+    return MessageResponseDTO(message="User registered successfully")
 
 #FUNCION PARA INICIAR SESION
 def login_user(data: UserLoginDTO, db : Session) -> str:
@@ -86,13 +86,13 @@ def sv_get_all_users(filters: UserFilterDTO, db : Session ) -> dict:
     }
 
 #FUNCION PARA MODIFICAR LA INFORMACION BASICA DEL USUARIO
-def sv_update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Session, current_user: dict = None) -> User:
+def sv_update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Session, current_user: dict = None) -> MessageResponseDTO:
     if current_user:
         check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
+
     #ACTUALIZAR LOS CAMPOS QUE SOLO SE MANDARON
     update_data = data.model_dump(exclude_unset=True)#EXCLUDE_UNSET SOLO TOMAS LOS CAMPOS QUESE MADNARON
     for field, value in update_data.items():
@@ -100,11 +100,10 @@ def sv_update_basic_information(user_id: UUID, data : UserUpdateDTO, db : Sessio
 
     user.update_at = datetime.now()
     db.commit()
-    db.refresh(user)
-    return user
+    return MessageResponseDTO(message="User information updated successfully")
 
 #FUNCION PARA MODIFICAR EL CORREO
-def sv_update_email(user_id: UUID, data: UserLoginDTO, db: Session, current_user: dict = None) -> User:
+def sv_update_email(user_id: UUID, data: UserLoginDTO, db: Session, current_user: dict = None) -> MessageResponseDTO:
     if current_user:
         check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
@@ -115,30 +114,27 @@ def sv_update_email(user_id: UUID, data: UserLoginDTO, db: Session, current_user
     user.email = data.email
     user.update_at = datetime.now()
     db.commit()
-    db.refresh(user)
-    return user
+    return MessageResponseDTO(message="Email updated successfully")
 
 #FUNCION PARA ACTUALIZAR EL ROL DE UN USARIO
-def sv_update_rol(user_id: UUID, rol: RolEnum, db : Session) -> User:
+def sv_update_rol(user_id: UUID, rol: RolEnum, db : Session) -> MessageResponseDTO:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     user.rol = rol
     user.update_at = datetime.now()
     db.commit()
-    db.refresh(user)
-    return user
+    return MessageResponseDTO(message="User role updated successfully")
 
 #FUNCION PARA ACTUALIZAR EL ESTADO DE UN USUAIO
-def sv_update_status(user_id : UUID, db: Session) -> User:
+def sv_update_status(user_id : UUID, db: Session) -> MessageResponseDTO:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     user.status = not user.status
     user.update_at = datetime.now()
     db.commit()
-    db.refresh(user)
-    return user
+    return MessageResponseDTO(message="User status updated successfully")
 
 #FUNCION PARA TRAER LA INFORMACION DE UN USUARIO POR ID
 def sv_get_user_by_Id(user_id: UUID, db: Session) -> User:
@@ -148,23 +144,19 @@ def sv_get_user_by_Id(user_id: UUID, db: Session) -> User:
     return UserResponseDTO.model_validate(user)
 
 #FUNCION PARA CAMBIAR LA IMAGEN DE UN USARIO
-def sv_update_user_image(user_id : UUID, file: UploadFile, db: Session, current_user: dict = None) -> User:
+def sv_update_user_image(user_id : UUID, file: UploadFile, db: Session, current_user: dict = None) -> MessageResponseDTO:
     if current_user:
         check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
-    image_url = None
 
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= "User not found")
     if not file:
         raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail= "An image is required")
-    
+
     if user.user_image:
         sv_delete_file(user.user_image)
-    
-    image_url = sv_upload_file(file,StorageFolderEnum.user, user_id)
-    user.user_image = image_url
 
+    user.user_image = sv_upload_file(file, StorageFolderEnum.user, user_id)
     db.commit()
-    db.refresh(user)
-    return user
+    return MessageResponseDTO(message="User image updated successfully")

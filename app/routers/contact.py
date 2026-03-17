@@ -5,12 +5,13 @@ from app.core.depends_db import get_db
 from app.core.auth import get_current_user
 from app.services.contact_service import sv_create_contact, sv_get_user_contact_filter, sv_update_contact, sv_get_contact_by_id, sv_update_image_contact, sv_update_status
 from app.schemas.contact import ContactCreateDTO, ContactFilterDTO, ContactUpdateDTO, ContactResponseDTO
+from app.schemas.common import MessageResponseDTO
 
 router = APIRouter(prefix="/Contact", tags=["Contact"])
 
 
 #ENDPOINT PARA CREAR UN CONTACTO (propio usuario o admin)
-@router.post("/{user_id}", status_code=201)
+@router.post("/{user_id}", status_code=201, response_model=MessageResponseDTO)
 def create_contact(
     user_id: UUID,
     name: str = Form(...),
@@ -36,7 +37,7 @@ def get_contact_by_id(contact_id: UUID, db: Session = Depends(get_db)):
 
 
 #ENDPOINT PARA ACTUALIZAR UN CONTACTO (propio usuario o admin)
-@router.patch("/{contact_id}", response_model=ContactResponseDTO)
+@router.patch("/{contact_id}", response_model=MessageResponseDTO)
 def update_contact(
     contact_id: UUID,
     data: ContactUpdateDTO,
@@ -47,7 +48,7 @@ def update_contact(
 
 
 #ENDPOINT PARA ACTUALIZAR LA IMAGEN DE UN CONTACTO (propio usuario o admin)
-@router.patch("/{contact_id}/{user_id}/image", response_model=ContactResponseDTO)
+@router.patch("/{contact_id}/{user_id}/image", response_model=MessageResponseDTO)
 def update_image_contact(
     contact_id: UUID,
     user_id: UUID,
@@ -59,7 +60,7 @@ def update_image_contact(
 
 
 #ENDPOINT PARA ACTUALIZAR EL ESTADO DE UN CONTACTO (propio usuario o admin)
-@router.patch("/{contact_id}/status")
+@router.patch("/{contact_id}/status", response_model=MessageResponseDTO)
 def update_status(
     contact_id: UUID,
     db: Session = Depends(get_db),

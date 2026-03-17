@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from uuid import UUID, uuid4
 from app.schemas.contact import ContactCreateDTO, ContactResponseDTO, ContactFilterDTO, ContactUpdateDTO
+from app.schemas.common import MessageResponseDTO
 from app.services.storage_service import sv_upload_file, sv_delete_file
 from app.enums.storage_folder import StorageFolderEnum
 from app.models.Contact import Contact
@@ -16,7 +17,7 @@ def sv_create_contact(
         db : Session,
         file: UploadFile | None = None,
         current_user: dict = None
-) -> ContactResponseDTO:
+) -> MessageResponseDTO:
     if current_user:
         check_own_resource(user_id, current_user)
     image_url = None
@@ -33,8 +34,7 @@ def sv_create_contact(
     )
     db.add(contact)
     db.commit()
-    db.refresh(contact)
-    return ContactResponseDTO.model_validate(contact)
+    return MessageResponseDTO(message="Contact created successfully")
 
 # FUNCION PARA TRAER TODOS LOS CONTACTOS DE UN USUARIO CON FILTRADO
 def sv_get_user_contact_filter(user_id : UUID, filter: ContactFilterDTO, db: Session) -> dict:
@@ -64,7 +64,7 @@ def sv_get_contact_by_id(contact_id : UUID, db: Session) -> Contact:
     return contact
 
 #FUNCION PARA MODIFICAR UN CONTACTO
-def sv_update_contact(contact_id: UUID, data : ContactUpdateDTO, db : Session, current_user: dict = None) -> Contact:
+def sv_update_contact(contact_id: UUID, data : ContactUpdateDTO, db : Session, current_user: dict = None) -> MessageResponseDTO:
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
     if not contact:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
@@ -75,17 +75,14 @@ def sv_update_contact(contact_id: UUID, data : ContactUpdateDTO, db : Session, c
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(contact, field, value)
-    
+
     contact.update_at = datetime.now()
-    
     db.commit()
-    db.refresh(contact)
-    return contact
+    return MessageResponseDTO(message="Contact updated successfully")
 
 #Funcion para modificar una imagen de un contacto:
-def sv_update_image_contact(contact_id : UUID, user_id : UUID, file: UploadFile, db: Session, current_user: dict = None) -> Contact:
+def sv_update_image_contact(contact_id : UUID, user_id : UUID, file: UploadFile, db: Session, current_user: dict = None) -> MessageResponseDTO:
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
-    image_url = None
 
     if not contact:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
@@ -94,20 +91,16 @@ def sv_update_image_contact(contact_id : UUID, user_id : UUID, file: UploadFile,
 
     if not file:
         raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="A new image is requiered")
-    
-    image_url = sv_upload_file(file, StorageFolderEnum.contact, user_id)
+
     sv_delete_file(contact.link)
-
-    contact.link = image_url
+    contact.link = sv_upload_file(file, StorageFolderEnum.contact, user_id)
     contact.update_at = datetime.now()
-
     db.commit()
-    db.refresh(contact)
-    return contact
+    return MessageResponseDTO(message="Contact image updated successfully")
     
 
 #Funcion para modificar el estado de un contacto
-def sv_update_status(contact_id : UUID, db : Session, current_user: dict = None) -> Contact:
+def sv_update_status(contact_id : UUID, db : Session, current_user: dict = None) -> MessageResponseDTO:
     contact = db.query(Contact).filter(Contact.id == contact_id).first()
 
     if not contact:
@@ -117,7 +110,5 @@ def sv_update_status(contact_id : UUID, db : Session, current_user: dict = None)
 
     contact.status = not contact.status
     contact.update_at = datetime.now()
-
     db.commit()
-    db.refresh(contact)
-    return contact
+    return MessageResponseDTO(message="Contact status updated successfully")

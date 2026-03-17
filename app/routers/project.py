@@ -7,6 +7,7 @@ from app.core.auth import get_current_user
 from app.schemas.project import (
     UpdateProjectDTO, ProjectResponseDTO, ProjectFiltersDTO, DeleteProjectImageDTO
 )
+from app.schemas.common import MessageResponseDTO
 from app.services.project_service import (
     sv_create_project, sv_get_user_projects, sv_get_project,
     sv_update_project, sv_upload_project_images,
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/project", tags=["Project"])
 # ──────────────────────────────────────────────────────────────
 
 #ENDPOINT PARA CREAR UN PROYECTO
-@router.post("/{user_id}", status_code=201, response_model=ProjectResponseDTO)
+@router.post("/{user_id}", status_code=201, response_model=MessageResponseDTO)
 def create_project(
     user_id: UUID,
     name: str = Form(...),
@@ -52,8 +53,8 @@ def get_user_projects(user_id: UUID, filters: ProjectFiltersDTO = Depends(), db:
 def get_project(project_id: UUID, db: Session = Depends(get_db)):
     return sv_get_project(project_id, db)
 
-#ENDPOINT PARA ACTUALIZAR LA INFORMACIÖN BASICA DE UN PROYECTO 
-@router.patch("/{project_id}", response_model=ProjectResponseDTO)
+#ENDPOINT PARA ACTUALIZAR LA INFORMACIÖN BASICA DE UN PROYECTO
+@router.patch("/{project_id}", response_model=MessageResponseDTO)
 def update_project(
     project_id: UUID,
     data: UpdateProjectDTO,
@@ -63,7 +64,7 @@ def update_project(
     return sv_update_project(project_id, data, current_user, db)
 
 #ENDPOINT PARA CAMBIAR EL ESTADO DE UN PROYECTO
-@router.patch("/{project_id}/status", response_model=ProjectResponseDTO)
+@router.patch("/{project_id}/status", response_model=MessageResponseDTO)
 def update_status_project(project_id: UUID, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     return sv_update_status_project(project_id, current_user, db)
 
@@ -73,7 +74,7 @@ def update_status_project(project_id: UUID, db: Session = Depends(get_db), curre
 # ──────────────────────────────────────────────────────────────
 
 #ENDPOINT PARA AGREGAR IMAGENES AL PROYECTO
-@router.post("/{project_id}/{user_id}/images", response_model=ProjectResponseDTO)
+@router.post("/{project_id}/{user_id}/images", response_model=MessageResponseDTO)
 def upload_project_images(
     project_id: UUID,
     user_id: UUID,
@@ -84,7 +85,7 @@ def upload_project_images(
     return sv_upload_project_images(project_id, user_id, current_user, files, db)
 
 #ENDPOINT PARA ELIMINAR IMAGENES DEL PROYECTO
-@router.delete("/{project_id}/{user_id}/images", response_model=ProjectResponseDTO)
+@router.delete("/{project_id}/{user_id}/images", response_model=MessageResponseDTO)
 def delete_project_image(
     project_id: UUID,
     user_id: UUID,

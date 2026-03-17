@@ -9,6 +9,7 @@ from app.schemas.language import (
     LanguageFiltersDTO, CreateLanguageUserDTO, UserLanguageReponseDTO,
     UserLanguageFiltersDTO, UpdateLanguageUserDTO
 )
+from app.schemas.common import MessageResponseDTO
 from app.models.Language import Language
 from app.models.User_language import UserLanguage
 from app.models.User import User
@@ -19,7 +20,7 @@ from app.core.auth import check_own_resource
 #  LANGUAGE CRUD
 # ──────────────────────────────────────────────────────────────
 
-def sv_create_lenguage(data: CreateLanguageDTO, db: Session) -> LanguageResponseDTO:
+def sv_create_lenguage(data: CreateLanguageDTO, db: Session) -> MessageResponseDTO:
     normalized_name = data.name.strip().capitalize()
     exist = db.query(Language).filter(func.lower(Language.name) == normalized_name.lower()).first()
     if exist:
@@ -32,11 +33,10 @@ def sv_create_lenguage(data: CreateLanguageDTO, db: Session) -> LanguageResponse
     )
     db.add(language)
     db.commit()
-    db.refresh(language)
-    return language
+    return MessageResponseDTO(message="Language created successfully")
 
 
-def sv_update_language(language_id: UUID, data: UpdateLanguageDTO, db: Session) -> LanguageResponseDTO:
+def sv_update_language(language_id: UUID, data: UpdateLanguageDTO, db: Session) -> MessageResponseDTO:
     normalized_name = data.name.strip().capitalize()
     language = db.query(Language).filter(Language.id == language_id).first()
 
@@ -46,11 +46,10 @@ def sv_update_language(language_id: UUID, data: UpdateLanguageDTO, db: Session) 
     language.name = normalized_name
     language.update_at = datetime.now()
     db.commit()
-    db.refresh(language)
-    return language
+    return MessageResponseDTO(message="Language updated successfully")
 
 
-def sv_update_status_language(language_id: UUID, db: Session) -> LanguageResponseDTO:
+def sv_update_status_language(language_id: UUID, db: Session) -> MessageResponseDTO:
     language = db.query(Language).filter(Language.id == language_id).first()
 
     if not language:
@@ -59,8 +58,7 @@ def sv_update_status_language(language_id: UUID, db: Session) -> LanguageRespons
     language.status = not language.status
     language.update_at = datetime.now()
     db.commit()
-    db.refresh(language)
-    return language
+    return MessageResponseDTO(message="Language status updated successfully")
 
 
 def sv_get_all_languages(filters: LanguageFiltersDTO, db: Session) -> dict:
@@ -106,7 +104,7 @@ _USER_LANGUAGE_COLS = (
 )
 
 
-def sv_create_language_user(data: CreateLanguageUserDTO, db: Session, current_user: dict = None) -> UserLanguageReponseDTO:
+def sv_create_language_user(data: CreateLanguageUserDTO, db: Session, current_user: dict = None) -> MessageResponseDTO:
     if current_user:
         check_own_resource(data.user_id, current_user)
     user = db.query(User).filter(User.id == data.user_id).first()
@@ -133,14 +131,7 @@ def sv_create_language_user(data: CreateLanguageUserDTO, db: Session, current_us
         created_at=datetime.now()
     ))
     db.commit()
-
-    return UserLanguageReponseDTO(
-        user_id=data.user_id,
-        language_id=data.language_id,
-        language_name=language.name,
-        level=data.level,
-        status=True
-    )
+    return MessageResponseDTO(message="Language assigned to user successfully")
 
 
 def sv_get_all_user_languages(user_id: UUID, filters: UserLanguageFiltersDTO, db: Session) -> dict:
@@ -203,7 +194,7 @@ def sv_get_user_language(user_id: UUID, language_id: UUID, db: Session) -> UserL
     )
 
 
-def sv_update_status_user_language(user_id: UUID, language_id: UUID, db: Session, current_user: dict = None) -> UserLanguageReponseDTO:
+def sv_update_status_user_language(user_id: UUID, language_id: UUID, db: Session, current_user: dict = None) -> MessageResponseDTO:
     if current_user:
         check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
@@ -219,24 +210,16 @@ def sv_update_status_user_language(user_id: UUID, language_id: UUID, db: Session
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This user doesn't have this language registered")
 
-    new_status = not result.status
     db.execute(
         update(UserLanguage)
         .where(UserLanguage.c.user_id == user_id, UserLanguage.c.language_id == language_id)
-        .values(status=new_status, updated_at=datetime.now())
+        .values(status=not result.status, updated_at=datetime.now())
     )
     db.commit()
-
-    return UserLanguageReponseDTO(
-        user_id=user_id,
-        language_id=language_id,
-        language_name=result.language_name,
-        level=result.level,
-        status=new_status
-    )
+    return MessageResponseDTO(message="User language status updated successfully")
 
 
-def sv_update_data_user_language(user_id: UUID, language_id: UUID, data: UpdateLanguageUserDTO, db: Session, current_user: dict = None) -> UserLanguageReponseDTO:
+def sv_update_data_user_language(user_id: UUID, language_id: UUID, data: UpdateLanguageUserDTO, db: Session, current_user: dict = None) -> MessageResponseDTO:
     if current_user:
         check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
@@ -258,11 +241,4 @@ def sv_update_data_user_language(user_id: UUID, language_id: UUID, data: UpdateL
         .values(level=data.level, updated_at=datetime.now())
     )
     db.commit()
-
-    return UserLanguageReponseDTO(
-        user_id=user_id,
-        language_id=language_id,
-        language_name=result.language_name,
-        level=data.level,
-        status=result.status
-    )
+    return MessageResponseDTO(message="User language updated successfully")

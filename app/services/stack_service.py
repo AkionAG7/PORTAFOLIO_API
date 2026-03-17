@@ -9,6 +9,7 @@ from app.schemas.stack import (
     StackFiltersDTO, CreateUserStackDTO, UserStackResponseDTO,
     UserStackFiltersDTO
 )
+from app.schemas.common import MessageResponseDTO
 from app.models.Stack import Stack
 from app.models.User_stack import UserStack
 from app.models.User import User
@@ -28,7 +29,7 @@ _USER_STACK_COLS = (
 # ──────────────────────────────────────────────────────────────
 
 #FUNCION PARA CREAR UN STACK TECNOLOGICO
-def sv_create_stack(data: CreateStackDTO, db: Session) -> StackResponseDTO:
+def sv_create_stack(data: CreateStackDTO, db: Session) -> MessageResponseDTO:
     normalized_name = data.name.strip().capitalize()
     exist = db.query(Stack).filter(func.lower(Stack.name) == normalized_name.lower()).first()
     if exist:
@@ -40,11 +41,10 @@ def sv_create_stack(data: CreateStackDTO, db: Session) -> StackResponseDTO:
     )
     db.add(stack)
     db.commit()
-    db.refresh(stack)
-    return stack
+    return MessageResponseDTO(message="Stack created successfully")
 
 #FUNCION PARA ACTUALIZAR LA INFORMACION DE UN STACK
-def sv_update_stack(stack_id: UUID, data: UpdateStackDTO, db: Session) -> StackResponseDTO:
+def sv_update_stack(stack_id: UUID, data: UpdateStackDTO, db: Session) -> MessageResponseDTO:
     normalized_name = data.name.strip().capitalize()
     stack = db.query(Stack).filter(Stack.id == stack_id).first()
     if not stack:
@@ -52,19 +52,17 @@ def sv_update_stack(stack_id: UUID, data: UpdateStackDTO, db: Session) -> StackR
     stack.name = normalized_name
     stack.update_at = datetime.now()
     db.commit()
-    db.refresh(stack)
-    return stack
+    return MessageResponseDTO(message="Stack updated successfully")
 
 #FUNCION PARA ACTUALIZAR EL STATUS DE UN STACK
-def sv_update_status_stack(stack_id: UUID, db: Session) -> StackResponseDTO:
+def sv_update_status_stack(stack_id: UUID, db: Session) -> MessageResponseDTO:
     stack = db.query(Stack).filter(Stack.id == stack_id).first()
     if not stack:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stack not found")
     stack.status = not stack.status
     stack.update_at = datetime.now()
     db.commit()
-    db.refresh(stack)
-    return stack
+    return MessageResponseDTO(message="Stack status updated successfully")
 
 #FUNCION PARA OBTENER TODOS LOS STACKS CON FILTROS OPCIONALES
 def sv_get_all_stacks(filters: StackFiltersDTO, db: Session) -> dict:
@@ -93,7 +91,7 @@ def sv_get_stack(stack_id: UUID, db: Session) -> StackResponseDTO:
 # ──────────────────────────────────────────────────────────────
 
 #FUNCION PARA ASIGNAR UN STACK A UN USER
-def sv_create_user_stack(data: CreateUserStackDTO, current_user: dict, db: Session) -> UserStackResponseDTO:
+def sv_create_user_stack(data: CreateUserStackDTO, current_user: dict, db: Session) -> MessageResponseDTO:
     check_own_resource(data.user_id, current_user)
     user = db.query(User).filter(User.id == data.user_id).first()
     if not user:
@@ -111,12 +109,7 @@ def sv_create_user_stack(data: CreateUserStackDTO, current_user: dict, db: Sessi
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This user already has this stack")
     db.execute(insert(UserStack).values(user_id=data.user_id, stack_id=data.stack_id))
     db.commit()
-    return UserStackResponseDTO(
-        user_id=data.user_id,
-        stack_id=data.stack_id,
-        stack_name=stack.name,
-        status=True
-    )
+    return MessageResponseDTO(message="Stack assigned to user successfully")
 
 #FUNCION PARA OBTENER TODOS LOS STACKS QUE TIENE UN USUARIO CON FILTRO OPCIONAL
 def sv_get_all_user_stacks(user_id: UUID, filters: UserStackFiltersDTO, db: Session) -> dict:
@@ -163,7 +156,7 @@ def sv_get_user_stack(user_id: UUID, stack_id: UUID, db: Session) -> UserStackRe
     )
 
 #FUNCION PARA CAMBIAR EL STATUS DEL STACK DE UN USUARIO
-def sv_update_status_user_stack(user_id: UUID, stack_id: UUID, current_user: dict, db: Session) -> UserStackResponseDTO:
+def sv_update_status_user_stack(user_id: UUID, stack_id: UUID, current_user: dict, db: Session) -> MessageResponseDTO:
     check_own_resource(user_id, current_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -175,16 +168,10 @@ def sv_update_status_user_stack(user_id: UUID, stack_id: UUID, current_user: dic
     ).first()
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This user doesn't have this stack registered")
-    new_status = not result.status
     db.execute(
         update(UserStack)
         .where(UserStack.c.user_id == user_id, UserStack.c.stack_id == stack_id)
-        .values(status=new_status)
+        .values(status=not result.status)
     )
     db.commit()
-    return UserStackResponseDTO(
-        user_id=user_id,
-        stack_id=stack_id,
-        stack_name=result.stack_name,
-        status=new_status
-    )
+    return MessageResponseDTO(message="User stack status updated successfully")

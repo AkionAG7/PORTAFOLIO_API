@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.schemas.project import (
     CreateProjectDTO, UpdateProjectDTO, ProjectResponseDTO, ProjectFiltersDTO
 )
+from app.schemas.common import MessageResponseDTO
 from app.models.Project import Project
 from app.services.storage_service import sv_upload_file, sv_delete_file
 from app.enums.storage_folder import StorageFolderEnum
@@ -18,7 +19,7 @@ def sv_create_project(
     current_user: dict,
     db: Session,
     files: List[UploadFile] | None = None
-) -> ProjectResponseDTO:
+) -> MessageResponseDTO:
     check_own_resource(user_id, current_user)
     image_urls = []
     if files:
@@ -37,8 +38,7 @@ def sv_create_project(
     )
     db.add(project)
     db.commit()
-    db.refresh(project)
-    return ProjectResponseDTO.model_validate(project)
+    return MessageResponseDTO(message="Project created successfully")
 
 #FUNCION PARA TRAER TODOS LOS PROYECTOS DE UN USUARIO
 def sv_get_user_projects(user_id: UUID, filters: ProjectFiltersDTO, db: Session) -> dict:
@@ -62,7 +62,7 @@ def sv_get_project(project_id: UUID, db: Session) -> ProjectResponseDTO:
     return ProjectResponseDTO.model_validate(project)
 
 #FUNCION PARA ACTUALIZAR UN PROYECTO
-def sv_update_project(project_id: UUID, data: UpdateProjectDTO, current_user: dict, db: Session) -> ProjectResponseDTO:
+def sv_update_project(project_id: UUID, data: UpdateProjectDTO, current_user: dict, db: Session) -> MessageResponseDTO:
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
@@ -72,8 +72,7 @@ def sv_update_project(project_id: UUID, data: UpdateProjectDTO, current_user: di
         setattr(project, field, value)
     project.update_at = datetime.now()
     db.commit()
-    db.refresh(project)
-    return ProjectResponseDTO.model_validate(project)
+    return MessageResponseDTO(message="Project updated successfully")
 
 #FUNCION PARA AÑADIR IMAGENES DE UN PROYECTO
 def sv_upload_project_images(
@@ -82,7 +81,7 @@ def sv_upload_project_images(
     current_user: dict,
     files: List[UploadFile],
     db: Session
-) -> ProjectResponseDTO:
+) -> MessageResponseDTO:
     check_own_resource(user_id, current_user)
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
@@ -96,8 +95,7 @@ def sv_upload_project_images(
     project.image_link = current_images + new_urls
     project.update_at = datetime.now()
     db.commit()
-    db.refresh(project)
-    return ProjectResponseDTO.model_validate(project)
+    return MessageResponseDTO(message="Project images uploaded successfully")
 
 #FUNCION PARA ELIMINAR LAS IMAGENESS DE UN PROYECTO
 def sv_delete_project_image(
@@ -106,7 +104,7 @@ def sv_delete_project_image(
     image_url: str,
     current_user: dict,
     db: Session
-) -> ProjectResponseDTO:
+) -> MessageResponseDTO:
     check_own_resource(user_id, current_user)
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
@@ -119,11 +117,10 @@ def sv_delete_project_image(
     project.image_link = [url for url in project.image_link if url != image_url]
     project.update_at = datetime.now()
     db.commit()
-    db.refresh(project)
-    return ProjectResponseDTO.model_validate(project)
+    return MessageResponseDTO(message="Project image deleted successfully")
 
 #FUNCION PARA CAMBIAR EL ESTADO DE UN PROYECTO
-def sv_update_status_project(project_id: UUID, current_user: dict, db: Session) -> ProjectResponseDTO:
+def sv_update_status_project(project_id: UUID, current_user: dict, db: Session) -> MessageResponseDTO:
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
@@ -131,5 +128,4 @@ def sv_update_status_project(project_id: UUID, current_user: dict, db: Session) 
     project.status = not project.status
     project.update_at = datetime.now()
     db.commit()
-    db.refresh(project)
-    return ProjectResponseDTO.model_validate(project)
+    return MessageResponseDTO(message="Project status updated successfully")
