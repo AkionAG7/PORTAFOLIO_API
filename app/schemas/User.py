@@ -32,6 +32,8 @@ class UserResponseDTO(BaseModel):
     email: str
     title: str | None = None
     rol: str
+    status: bool
+    user_image: str | None = None
 
     model_config = {"from_attributes": True}
 

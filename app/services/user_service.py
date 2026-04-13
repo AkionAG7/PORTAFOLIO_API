@@ -59,6 +59,11 @@ def login_user(data: UserLoginDTO, db : Session) -> str:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email or password is incorrect"
         )
+    if not user.status:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is disabled"
+        )
     return create_access_token({"sub": str(user.id), "email" : user.email, "rol" : user.rol})
 
 #FUNCION PARA LISTAR A TODOS LOS USARIOS CON FILTROS OPCIONALES   

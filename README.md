@@ -45,10 +45,8 @@ http://localhost:8000/redoc
 
 ## Features
 
-- JWT-based authentication with role system (`admin` / `user`)
 - Full CRUD for users, contacts, projects, languages, and tech stack
 - File upload for user avatars, contact images, and project screenshots via Supabase Storage
-- Soft deletes (status boolean) — data is never hard-deleted
 - Pagination on all list endpoints (`skip` / `limit`)
 - Layered architecture: Router → Service → ORM — easy to extend
 
