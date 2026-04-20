@@ -21,7 +21,7 @@ def sv_create_contact(
     if current_user:
         check_own_resource(user_id, current_user)
     image_url = None
-    if file:
+    if file and file.filename:
         image_url = sv_upload_file(file, StorageFolderEnum.contact, user_id)
 
     contact = Contact(

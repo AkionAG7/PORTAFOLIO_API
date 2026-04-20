@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, File, UploadFile, Form
+from typing import Optional
 from uuid import UUID
 from sqlalchemy.orm import Session
 from app.core.depends_db import get_db
@@ -17,7 +18,7 @@ def create_contact(
     name: str = Form(...),
     link: str = Form(...),
     db: Session = Depends(get_db),
-    file: UploadFile | None = File(default=None),
+    file: Optional[UploadFile] = File(None),
     current_user: dict = Depends(get_current_user)
 ):
     data = ContactCreateDTO(name=name, link=link)
@@ -52,7 +53,7 @@ def update_contact(
 def update_image_contact(
     contact_id: UUID,
     user_id: UUID,
-    file: UploadFile,
+    file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
