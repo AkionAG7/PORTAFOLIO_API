@@ -15,18 +15,19 @@ def sv_upload_file(file: UploadFile, folder: StorageFolderEnum, user_id : UUID )
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid file type '.{file_ext}'. Allowed formats: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
             )
-        original_name = file.filename.rsplit(".", 1)[0]
-        file_name = f"{folder.value}/{user_id}/{original_name}.{file_ext}"
+        file_name = f"{folder.value}/{user_id}/{uuid.uuid4()}.{file_ext}"
         content = file.file.read()
 
         supabase.storage.from_(SUPABASE_BUCKET).upload(
             path=file_name,
-            file = content,
+            file=content,
             file_options={"content-type": file.content_type}
         )
 
         url = supabase.storage.from_(SUPABASE_BUCKET).get_public_url(file_name)
         return url
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error has ocurred: {str(e)}")
 
