@@ -92,8 +92,9 @@ def sv_update_image_contact(contact_id : UUID, user_id : UUID, file: UploadFile,
     if not file:
         raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="A new image is requiered")
 
-    sv_delete_file(contact.link)
-    contact.link = sv_upload_file(file, StorageFolderEnum.contact, user_id)
+    if contact.image:
+        sv_delete_file(contact.image)
+    contact.image = sv_upload_file(file, StorageFolderEnum.contact, user_id)
     contact.update_at = datetime.now()
     db.commit()
     return MessageResponseDTO(message="Contact image updated successfully")
