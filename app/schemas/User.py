@@ -30,6 +30,7 @@ class UserResponseDTO(BaseModel):
     last_name1: str
     last_name2: str | None = None
     email: str
+    phone_number: str | None = None
     title: str | None = None
     rol: str
     status: bool
