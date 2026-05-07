@@ -7,10 +7,11 @@ import uuid
 from uuid import UUID
 from app.core.config import ALGORITHM,SECRET_KEY,TOKEN_EXPIRE
 from app.models import User
-from app.schemas.User import UserRegisterDTO, UserLoginDTO, UserFilterDTO, UserUpdateDTO, UserResponseDTO
+from app.schemas.User import UserRegisterDTO, UserLoginDTO, UserFilterDTO, UserUpdateDTO, UserResponseDTO, ForgotPasswordDTO, ResetPasswordDTO
 from app.schemas.common import MessageResponseDTO
 from app.enums.Rol import RolEnum
 from app.services.storage_service import sv_delete_file, sv_upload_file
+from app.services.email_service import send_reset_password_email
 from app.enums.storage_folder import StorageFolderEnum
 from app.core.auth import check_own_resource
 
@@ -147,6 +148,38 @@ def sv_get_user_by_Id(user_id: UUID, db: Session) -> User:
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return UserResponseDTO.model_validate(user)
+
+#FUNCION PARA SOLICITAR RECUPERACION DE CONTRASEÑA
+def sv_forgot_password(data: ForgotPasswordDTO, db: Session) -> MessageResponseDTO:
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        # Return success regardless to avoid user enumeration
+        return MessageResponseDTO(message="If that email exists, a reset link has been sent")
+    token = create_access_token({"sub": str(user.id), "purpose": "reset"})
+    send_reset_password_email(user.email, user.name, token)
+    return MessageResponseDTO(message="If that email exists, a reset link has been sent")
+
+#FUNCION PARA CAMBIAR LA CONTRASEÑA CON TOKEN
+def sv_reset_password(data: ResetPasswordDTO, db: Session) -> MessageResponseDTO:
+    try:
+        payload = jwt.decode(data.token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reset token has expired")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid reset token")
+
+    if payload.get("purpose") != "reset":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid reset token")
+
+    user_id = payload.get("sub")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    user.password = hash_password(data.new_password)
+    user.update_at = datetime.now()
+    db.commit()
+    return MessageResponseDTO(message="Password updated successfully")
 
 #FUNCION PARA CAMBIAR LA IMAGEN DE UN USARIO
 def sv_update_user_image(user_id : UUID, file: UploadFile, db: Session, current_user: dict = None) -> MessageResponseDTO:

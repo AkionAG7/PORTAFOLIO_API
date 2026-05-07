@@ -63,3 +63,19 @@ class UserUpdateDTO(BaseModel):
     phone_number : str | None = None
     title: str | None = None
     description: str | None = None
+
+#DTO PARA SOLICITAR RECUPERACION DE CONTRASEÑA
+class ForgotPasswordDTO(BaseModel):
+    email: EmailStr
+
+#DTO PARA CAMBIAR LA CONTRASEÑA CON TOKEN
+class ResetPasswordDTO(BaseModel):
+    token: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def password_max_length(cls, v):
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password cannot be more than 72 characters")
+        return v
